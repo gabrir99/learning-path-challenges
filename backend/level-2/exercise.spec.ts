@@ -12,7 +12,8 @@ const app = express();
  */
 
 app.get('/', (req: unknown, res: unknown) => {
-    // TODO: complete this function
+    const myRes = res as express.Response
+    myRes.send('Hello World!')
 })
 
 /**
@@ -23,11 +24,22 @@ app.get('/', (req: unknown, res: unknown) => {
  * - Define a route `/protected` that returns the value of the 'x-shadowy-user' header.
  */
 const authMiddleware = (req: unknown, res: unknown, next: unknown) => {
-    // TODO: complete this function
+    const myReq = req as express.Request
+    const myRes = res as express.Response
+    const myNext = next as Function
+    if(!myReq.headers['x-shadowy-user']){
+        myRes.status(403).send()
+    } else {
+        myRes.statusCode = 200
+        myNext()        
+    }
 }
 
 app.get('/protected', authMiddleware,  async (req: unknown, res: unknown) => {
-    // TODO: complete this function
+    const myReq = req as express.Request
+    const myRes = res as express.Response 
+    app.use(authMiddleware)    
+    myRes.send(myReq.headers['x-shadowy-user'])
 })
 
 describe('[Backend] Level 2', () => {
@@ -43,3 +55,4 @@ describe('[Backend] Level 2', () => {
         expect(res.text).equal('shadower')
     })
 })
+
