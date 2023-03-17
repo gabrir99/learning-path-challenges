@@ -4,7 +4,6 @@ import express from 'express';
 import * as dotenv from 'dotenv'
 import mongoose, { model, Schema } from 'mongoose'
 import { exit } from 'process';
-
 /**
  * DO NOT TOUCH THIS PART
  */
@@ -34,7 +33,9 @@ const app = express();
  * Each contract has an address (string), a name (string) and an ABI (list of objects).
  */
 interface IContract {
-    // TODO: define here
+    address: String,
+    name: String,
+    ABI : Object[]
 }
 
 /**
@@ -43,8 +44,19 @@ interface IContract {
  * Define the contract schema and model that will be saved into MongoDB.
  * NOTE: make sure to use the interface above! 
  */
-const contractSchema = new Schema<unknown>({
-    // TODO: add here
+const contractSchema = new Schema<IContract>({
+    address: {
+        type: String, 
+        required: true
+    },  
+    name: {
+        type: String, 
+        required: true 
+    },
+    ABI : { 
+        type : [Object],
+        required : true 
+    }
 })
 
 const Contract = model<unknown>('unknown', contractSchema)
@@ -56,12 +68,25 @@ const Contract = model<unknown>('unknown', contractSchema)
  * - GET /:address : returnss the contract with the given address, returns 404 if not found
  */
 app.get('/', (req: unknown, res: unknown) => {
-    // TODO: complete this function
+    const myRes = res as express.Response
+    Contract.find()
+        .then((result) =>  {
+            myRes.send(result)
+        })
 })
 
-
 app.get('/:address', (req: unknown, res: unknown) => {
-    // TODO: complete this function
+    const myRes = res as express.Response
+    const myReq = req as express.Request
+    const address = myReq.params.address
+    Contract.find({address: address})
+    .then((result) => {
+        if (result.length === 0){
+            myRes.status(404).send('Address not found')
+        } else {
+            myRes.send(result)
+        }
+    })
 })
 
 describe('[Backend] Level 3', () => {
