@@ -34,7 +34,9 @@ const app = express();
  * Each contract has an address (string), a name (string) and an ABI (list of objects).
  */
 interface IContract {
-    // TODO: define here
+    address : string, 
+    name : string, 
+    abi : Record<string, unknown>[]
 }
 
 /**
@@ -43,11 +45,13 @@ interface IContract {
  * Define the contract schema and model that will be saved into MongoDB.
  * NOTE: make sure to use the interface above! 
  */
-const contractSchema = new Schema<unknown>({
-    // TODO: add here
+const contractSchema = new Schema<IContract>({
+    address: String,
+    name: String,
+    abi: [{ type: Schema.Types.Mixed }]
 })
 
-const Contract = model<unknown>('unknown', contractSchema)
+const Contract = model<IContract>('Contract', contractSchema)
 
 /** Exercise 3:
  * 
@@ -55,33 +59,50 @@ const Contract = model<unknown>('unknown', contractSchema)
  * - GET /: returns all the contracts available
  * - GET /:address : returnss the contract with the given address, returns 404 if not found
  */
-app.get('/', (req: unknown, res: unknown) => {
-    // TODO: complete this function
+app.get('/', async (req: unknown, res: unknown) => {
+    const myRes = res as express.Response
+    try{
+        const contracts = await Contract.find()
+        myRes.send(contracts)
+    } catch(error) {
+        myRes.status(500).send(error)
+    }
 })
 
-
-app.get('/:address', (req: unknown, res: unknown) => {
-    // TODO: complete this function
+app.get('/:address', async (req: unknown, res: unknown) => {
+    const myRes = res as express.Response
+    const myReq = req as express.Request
+    const address = myReq.params.address
+    try{
+        const contract = await Contract.findOne({address : address})
+        if(!contract){
+            myRes.status(404).send('Address not found')
+        } else {
+            myRes.send(contract)
+        }
+    } catch(error){
+        myRes.status(500).send(error)
+    }
 })
 
 describe('[Backend] Level 3', () => {
-    beforeEach(async (done) => {
+    beforeEach(async () => {
         await mongoose.connection.collections.contracts.deleteMany({})
-        done();
+        //done();
     })
     it('[Exercise 3a] GET / should return a list of contracts', async () => {
         const contract = new Contract({ name: 'test', address: 'test123', abi: [{ functionName: "testFunction" }]});
         await contract.save();
         const contract2 = new Contract({ name: 'test2', address: 'test456', abi: [{ functionName: "testFunction2" }]});
-        await contract2.save();
+        await contract2.save()
         const res = await request(app).get('/').expect(200)
-        expect(res.body).eql([{ ...contract, _id: contract._id.toHexString()}, { ...contract2, _id: contract2._id.toHexString()}])
+        expect(res.body).eql([{ ...contract.toJSON(), _id: contract._id.toHexString()}, { ...contract2.toJSON(), _id: contract2._id.toHexString()}])
     })
     it('[Exercise 3b] GET /:address should return a given contract or 404', async () => {
         const contract = new Contract({ name: 'test', address: 'test123', abi: [{ functionName: "testFunction" }]});
         await contract.save();
         const res = await request(app).get('/test123').expect(200)
-        expect(res.body).eql(contract)
+        expect(res.body).eql({...contract.toJSON(), _id: contract._id.toHexString()})
         await request(app).get('/test789').expect(404)
     })
 })
