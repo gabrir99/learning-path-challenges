@@ -59,29 +59,26 @@ const Contract = model<IContract>('Contract', contractSchema)
  * - GET /: returns all the contracts available
  * - GET /:address : returnss the contract with the given address, returns 404 if not found
  */
-app.get('/', async (req: unknown, res: unknown) => {
-    const myRes = res as express.Response
+app.get('/', async (req, res) => {
     try{
         const contracts = await Contract.find()
-        myRes.send(contracts)
+        res.send(contracts)
     } catch(error) {
-        myRes.status(500).send(error)
+        res.status(500).send(error)
     }
 })
 
-app.get('/:address', async (req: unknown, res: unknown) => {
-    const myRes = res as express.Response
-    const myReq = req as express.Request
-    const address = myReq.params.address
+app.get('/:address', async (req, res) => {
+    const address = req.params.address
     try{
         const contract = await Contract.findOne({address : address})
         if(!contract){
-            myRes.status(404).send('Address not found')
+            res.status(404).send('Address not found')
         } else {
-            myRes.send(contract)
+            res.send(contract)
         }
     } catch(error){
-        myRes.status(500).send(error)
+        res.status(500).send(error)
     }
 })
 
